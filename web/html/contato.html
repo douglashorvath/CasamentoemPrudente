@@ -1,0 +1,130 @@
+<!--
+Author: CaffeineDev
+Author URL: http://caffeinedev.com.br
+-->
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Casamento em Prudente</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="web/css/style.css" type="text/css" media="all" />
+<link rel="stylesheet" href="web/css/flexslider.css" type="text/css" media="all" />
+<script src="web/js/modernizr.js"></script>
+</head>
+<body>
+    <div class="header">
+      <div class="wrap">
+             <div class="logo">
+                <a href="index.php"><img src="web/images/logo.png" alt=""></a>
+                    </div>
+                    <div class="ten columns">
+                      <div class="mod modNav right" data-connectors="1">
+                        <ul class="nav-bar">
+                            <li>
+                              <a class="main" href="index.php">Home</a>
+                            </li>
+                            <li>
+                              <a class="main" href="empresas.php">Empresas</a></li>
+                            <li>
+                              <a class="main" href="guia.php">Guia</a>
+                            </li>
+                            <li>
+                              <a class="main" href="festas.php">Festas</a>
+                            </li>
+                            <li>
+                              <a class="main current" href="contato.php">Contato</a>
+                            </li>
+                          </ul>
+                      </div>
+                </div>
+                    <div class="clear"></div>
+            </div>
+    </div>
+    <div class="header-banner">
+            <div class="wrap">
+                <div class="mod modTagline" data-connectors="1">
+                  <h2 class="text-center">
+                    Dúvidas, sugestões ou reclamações? Contate-nos!</h2>
+
+                </div>
+
+      <!-- jQuery -->
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+      <script>window.jQuery || document.write('<script src="web/js/libs/jquery-1.7.min.js">\x3C/script>')</script>
+      <!-- FlexSlider -->
+      <script defer src="web/js/jquery.flexslider.js"></script>
+      <script type="text/javascript">
+        $(function(){
+          SyntaxHighlighter.all();
+        });
+        $(window).load(function(){
+          $('.flexslider').flexslider({
+            animation: "slide",
+            start: function(slider){
+              $('body').removeClass('loading');
+            }
+          });
+        });
+      </script>
+     </div>
+    </div>
+     <div class="content">
+        <div class="wrap">
+            <div class="content-top">
+                <div class="main"> 
+                    <div class="contact-text">
+                            <h2>Nossa Equipe Agradece</h2>
+                            <p>A equipe da CaffeineDev responsável pela criação, manutenção e administração do site Casamento em Prudente está disponível para responder qualquer dúvida
+                            e aceitar sugestões e reclamações sobre o site. Queremos trazer a Presidente Prudente e região o melhor site para serviços de casamento e para isso precisamos
+                            da ajuda de todos. Todas as opiniões são bem vindas e tentaremos deixar o site o mais próximo possível da experiência que os usuários querem, porém para isso
+                            precisamos da ajuda de vocês usando o formulário ao lado para comunicação conosco. Para informações sobre como ter o nome de sua empresa no site pode-se usar
+                            o formulário ao lado ou entrar em contato direto conosco. A CaffeineDev e a equipe do Casamento em Prudente agradece!</p>
+                    </div>
+                    <div class="contact-right">
+                        <!-- BEGIN BLOCK_CONTATO -->
+                            <h2>Formulário de Contato</h2>
+                            <form method="post" action="contato.php" >
+                                    <div>
+                                        <input name="nome" type="text" class="textbox" required="required" placeholder="Nome:" />
+                                    </div>
+                                    <div>
+                                        <input name="assunto" type="text" class="textbox" required="required" placeholder="Assunto:" />
+                                    </div>
+                                    <div>
+                                        <input name="email" type="email" class="textbox" required="required" placeholder="Email:" />
+                                    </div>
+                                    <div>
+                                        <input name="telefone" type="text" class="textbox" required="required" placeholder="Telefone:">
+                                    </div>
+                                    <div>
+                                        <textarea placeholder="Mensagem:" name="mensagem" required="required"></textarea>
+                                    </div>
+                                    <div>
+                                        <p>{MENSAGEM_ERRO}</p>
+                                    </div>
+                                    <div>
+                                        <span class="button"><input type="Submit" name="submit" value="Enviar"></span>
+                                            <span class="button"><input type="Reset" value="Limpar"></span>
+                                     </div>
+
+                                     <div class="clear"></div>  
+                             </form>
+                        <!-- END BLOCK_CONTATO -->
+                        <!-- BEGIN BLOCK_AGRADECIMENTO -->
+                            <h2>{MENSAGEM_AGRADECIMENTO}</h2>
+                        <!-- END BLOCK_AGRADECIMENTO -->
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+         </div>
+     </div>
+ <div class="footer">
+ 	<div class="wrap">
+            <div class="copy">
+		<p> © 2014 All rights Reserved | Design by <a href="http://caffeinedev.com.br">CaffeineDev</a></p>
+            </div>
+ 	</div>
+ </div>
+</body>
+</html>

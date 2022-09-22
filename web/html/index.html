@@ -1,0 +1,154 @@
+<!--
+Author: CaffeineDev
+Author URL: http://caffeinedev.com.br
+-->
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Casamento em Prudente</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="web/css/style.css" type="text/css" media="all" />
+<link rel="stylesheet" href="web/css/flexslider.css" type="text/css" media="all" />
+<script src="web/js/modernizr.js"></script>
+</head>
+<body>
+<div class="header">
+	<div class="wrap">
+	<div class="logo">
+		<a href="index.php"><img src="web/images/logo.png" alt=""></a>
+	</div>
+	<div class="ten columns">
+          <div class="mod modNav right" data-connectors="1">
+            <ul class="nav-bar">
+              <li>
+                <a class="main current" href="index.php">Home</a>
+              </li>
+              <li>
+                <a class="main" href="empresas.php">Empresas</a></li>
+              <li>
+                <a class="main" href="guia.php">Guia</a>
+              </li>
+              <li>
+                <a class="main" href="festas.php">Festas</a>
+              </li>
+              <li>
+                <a class="main" href="contato.php">Contato</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+	<div class="clear"></div>
+	</div>
+</div>
+<div class="header-banner">
+	<div class="wrap">
+		<div class="mod modTagline" data-connectors="1">
+              <h2 class="text-center">
+               Encontre aqui tudo para seu casamento!</h2>
+              <p class="text-center">
+                Seu casamento é o dia mais feliz da sua vida, e pode ser realmente difícil encontrar tudo para fazer desse dia o dia perfeito.
+                Nós do Casamento em Prudente agrupamos os serviços para Presidente Prudente e região para facilitar sua procura para que possa
+                encontrar tudo para ter o casamento do seus sonhos!
+                
+              </p>
+            </div>
+  <div id="container" class="cf">
+  	<div id="main" role="main">
+      <section class="slider">
+        <div class="flexslider">
+           <ul class="slides">
+                <li>
+  	    	    <img src="web/images/homeBanner.png" alt=""/>
+                    <div class="banner-icons">
+                        <a href="http://www.caffeinedev.com.br"><img style="width: 32px; display: inline-block;" src="web/images/icons/home-round.png" /></a>
+                        <a href="mailto:contato@caffeinedev.com.br"><img style="width: 32px; display: inline-block;" src="web/images/icons/email-round.png" /></a>
+                        <a href="tel:997902612"><img style="width: 32px; display: inline-block;" src="web/images/icons/phone-round.png" /></a>
+                        <a href="https://www.facebook.com/caffeinedev?fref=ts"><img style="width: 32px; display: inline-block;" src="web/images/icons/facebook-round.png" /></a>
+                    </div>
+                </li>
+                <!-- BEGIN BLOCK_BIGBANNER -->
+                <li>
+  	    	    <img src="{BANNERGRANDE_EMPRESA}" alt="{BIG_NOME_EMPRESA}"/>
+                    <div class="banner-icons">
+                        <!-- BEGIN BLOCK_BIGSITE -->
+                        <a href="{BIG_SITE_EMPRESA}"><img style="width: 32px; display: inline-block;" src="web/images/icons/home-round.png" /></a>
+                        <!-- END BLOCK_BIGSITE -->
+                        <a href="mailto:{BIG_EMAIL_EMPRESA}"><img style="width: 32px; display: inline-block;" src="web/images/icons/email-round.png" /></a>
+                        <a href="tel:{BIG_TELEFONE_EMPRESA}"><img style="width: 32px; display: inline-block;" src="web/images/icons/phone-round.png" /></a>
+                        <!-- BEGIN BLOCK_BIGFACEBOOK -->
+                        <a href="{BIG_FACEBOOK_EMPRESA}"><img style="width: 32px; display: inline-block;" src="web/images/icons/facebook-round.png" /></a>
+                        <!-- END BLOCK_BIGFACEBOOK -->
+                    </div>
+                </li>
+                <!-- END BLOCK_BIGBANNER -->
+                
+          </ul>
+        </div>
+      </section>
+   </div>
+ </div>
+  <!-- jQuery -->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="js/libs/jquery-1.7.min.js">\x3C/script>')</script>
+  <!-- FlexSlider -->
+  <script defer src="web/js/jquery.flexslider.js"></script>
+  <script type="text/javascript">
+    $(function(){
+      SyntaxHighlighter.all();
+    });
+    $(window).load(function(){
+      $('.flexslider').flexslider({
+        animation: "slide",
+        start: function(slider){
+          $('body').removeClass('loading');
+        }
+      });
+    });
+  </script>
+ </div>
+</div>
+ <div class="content">
+ 	<div class="wrap">
+ 		<div class="content-top">
+ 			<h3>Conheça os Serviços</h3>
+ 			<!-- BEGIN BLOCK_SIMPLEBANNER -->
+                        <div class="grid">
+ 				<div class="grid-img">
+ 					<img src="{IMAGEM}" alt="{NOME_EMPRESA}"/>
+ 				</div>
+ 				<div class="grid-desc">
+ 					<span class="head">{NOME_EMPRESA}</span>
+ 					<p>{ENDERECO_EMPRESA}</p>
+                                        <p>Telefone: {TELEFONE_EMPRESA}</p>
+                                        <p>e-Mail: {EMAIL_EMPRESA}</p>
+                                        <p class="banner-icons">
+                                            <!-- BEGIN BLOCK_SITE -->
+                                            <a href="{SITE_EMPRESA}"><img src="web/images/icons/home-round.png" /></a>
+                                            <!-- END BLOCK_SITE -->
+                                            <a href="mailto:{EMAIL_EMPRESA}"><img src="web/images/icons/email-round.png" /></a>
+                                            <a href="tel:{TELEFONE_EMPRESA}"><img src="web/images/icons/phone-round.png" /></a>
+                                            <!-- BEGIN BLOCK_FACEBOOK -->
+                                            <a href="{FACEBOOK_EMPRESA}"><img src="web/images/icons/facebook-round.png" /></a>
+                                            <!-- END BLOCK_FACEBOOK -->
+                                        </p>
+ 				</div>
+ 			</div>
+                        <!-- END BLOCK_SIMPLEBANNER -->
+                        
+ 			<div class="clear"></div>
+ 			<div class="button">
+ 				<a class="con-button" href="empresas.php">Ver Todos</a>
+ 			</div>
+ 		</div>
+ 		
+ 	</div>
+ </div>
+ <div class="footer">
+ 	<div class="wrap">
+            <div class="copy">
+		<p> © 2014 All rights Reserved | Design by <a href="http://caffeinedev.com.br">CaffeineDev</a></p>
+            </div>
+ 	</div>
+ </div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Casamento em Prudente System AD</title>
+
+<!-- CSS -->
+<link href="style/css/transdmin.css" rel="stylesheet" type="text/css" media="screen" />
+<!--[if IE 6]><link rel="stylesheet" type="text/css" media="screen" href="style/css/ie6.css" /><![endif]-->
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen" href="style/css/ie7.css" /><![endif]-->
+
+<!-- JavaScripts-->
+<script type="text/javascript" src="style/js/jquery.js"></script>
+<script type="text/javascript" src="style/js/jNice.js"></script>
+</head>
+
+<body>
+	<div id="wrapper">
+    	<!-- h1 tag stays for the logo, you can use the a tag for linking the index page -->
+    	<h1><a href="CadastroCategorias.php"><span>Casamento em Prudente System AD</span></a></h1>
+        
+        <!-- You can name the links with lowercase, they will be transformed to uppercase by CSS, we prefered to name them with uppercase to have the same effect with disabled stylesheet -->
+        <ul id="mainNav">
+        	<li><a href="index.php">HOME</a></li> <!-- Use the "active" class for the active menu item  -->
+        	<li><a href="Empresas.php"  class="active">EMPRESAS</a></li>
+        	<li><a href="Categorias.php">CATEGORIAS</a></li>
+        	<li><a href="#">EXTRAS</a></li>
+                <li><a href="EmailPacked.php">EMAIL</a></li>
+        	<li class="logout"><a href="finish_session.php">LOGOUT</a></li>
+        </ul>
+        <!-- // #end mainNav -->
+        
+        <div id="containerHolder">
+			<div id="container">
+        		<div id="sidebar">
+                	<ul class="sideNav">
+                        <li><a href="Empresas.php">Índice</a></li>
+                    	<li><a href="CadastroEmpresas.php" class="active">Cadastro</a></li>
+                    	
+                    </ul>
+                    <!-- // .sideNav -->
+                </div>    
+                <!-- // #sidebar -->
+                
+                <!-- h2 stays for breadcrumbs -->
+                <h2><a href="#">Empresas</a> &raquo; <a href="#" class="active">Cadastro</a></h2>
+                
+                <div id="main">
+                    <form method="post" action="CadastroEmpresas.php" class="jNice" enctype='multipart/form-data'>
+			<h3>Últimas Cadastradas</h3>
+                    	<table cellpadding="0" cellspacing="0">
+                            <!-- BEGIN BLOCK_ULTIMASCADASTRADAS -->
+                            <tr>
+                                <td>{ULTIMAS_NOME_EMPRESA}</td>
+                                <td class="action"><a href="EditarEmpresas.php?idemp={ULTIMAS_ID_EMPRESA}" class="edit">Editar</a><a href="ApagarEempresas.php?idemp={ULTIMAS_ID_EMPRESA}" class="delete">Apagar</a></td>
+                            </tr>         
+                            <!-- END BLOCK_ULTIMASCADASTRADAS -->                        
+                        </table>
+                        <a class="exibirtodas" href="Empresas.php?all=true" >Exibir Todas</a>
+			<h3>Nova Empresa</h3>
+                    	<fieldset>
+                            <p><label>Nome da Empresa</label><input type="text" class="text-long" required="required" name="nomeempresa"/></p>
+                                <p><label>Imagem da Empresa</label><input type="file" name="bannerempresa" /></p>
+                                <p><label>Endereço</label><textarea cols="50" rows="6" name="enderecoempresa" required="required"></textarea></p>
+                                <p><label>Telefone</label><input size="20" type="text" name="telefoneempresa" required="required"  /></p>
+                                <p><label>E-mail</label><input size="35" type="text" name="emailempresa" required="required" /></p>
+                                <p><label>Site</label><input size="50" type="text" name="siteempresa"/></p>
+                                <p><label>Facebook</label><input size="50" type="text" name="facebookempresa"/></p>
+                                <p><label>Categorias</label>
+                                    <select name="selectcategorias1empresa" required="required">
+                                        <!-- BEGIN BLOCK_CAT1 -->
+                                        <option value="{VALOR_CAT1}">{OPCAT1}</option>
+                                        <!-- END BLOCK_CAT1 -->
+                                    </select><br/><br/><br/>
+                                    <select name="selectcategorias2empresa">
+                                        <option value = "-1" >Nenhuma</option>
+                                        <!-- BEGIN BLOCK_CAT2 -->
+                                        <option value="{VALOR_CAT2}">{OPCAT2}</option>
+                                        <!-- END BLOCK_CAT2 -->
+                                    </select><br/><br/><br/>
+                                    <select name="selectcategorias3empresa">
+                                        <option value="-1">Nenhuma</option>
+                                        <!-- BEGIN BLOCK_CAT3 -->
+                                        <option value="{VALOR_CAT3}">{OPCAT3}</option>
+                                        <!-- END BLOCK_CAT3 -->
+                                    </select>
+                                </p>
+                                <p><label>Banner Simples</label> 
+                                    <select name="selectbannersimplesempresa">
+                                        <option value="0">Exibição Simples</option>
+                                        <option value="1">Exibição na Homescreen</option>
+                                    </select>
+                                </p>
+                                <p><label>Banner Grande</label> 
+                                    <select name="selectbannergrandeempresa">
+                                        <option value="0">Sem Exibição</option>
+                                        <option value="1">Exibição na Homescreen</option>
+                                    </select>  
+                                </p>
+                                <p><label>Imagem do Banner Grande</label> <input type="file" name="bannergrandeempresa" /></p>
+                        	<!-- BEGIN BLOCK_ERROR -->
+                                <p><label>{ERRO}</label></p>
+                                <!-- END BLOCK_ERROR -->
+                                <input name="submit" type="submit" value="Criar Nova" />
+                        </fieldset>
+                    </form>
+                </div>
+                <!-- // #main -->
+                
+                <div class="clear"></div>
+            </div>
+            <!-- // #container -->
+        </div>	
+        <!-- // #containerHolder -->
+        
+        <p id="footer">Desenvolvido para Uso exclusivo. <a href="http://www.caffeinedev.com.br">CaffeineDev Softwares</a></p>
+    </div>
+    <!-- // #wrapper -->
+</body>
+</html>
+
+

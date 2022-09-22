@@ -1,0 +1,272 @@
+<?php
+/*
+* 2007-2013 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Open Software License (OSL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/osl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author PrestaShop SA <contact@prestashop.com>
+*  @copyright  2007-2013 PrestaShop SA
+*  @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*/
+
+@ini_set('max_execution_time', 3600);
+
+class AdminAttributeGeneratorControllerCore extends AdminController
+{
+	protected $combinations = array();
+	protected $product;
+
+	public function __construct()
+	{
+	 	$this->table = 'product_attribute';
+		$this->className = 'Product';
+		$this->multishop_context_group = false;
+		
+		parent::__construct();
+	}
+
+	protected function addAttribute($attributes, $price = 0, $weight = 0)
+	{
+		foreach ($attributes as $attribute)
+		{
+			$price += (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', Tools::getValue('price_impact_'.(int)$attribute)));
+			$weight += (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', Tools::getValue('weight_impact_'.(int)$attribute)));
+		}
+		if ($this->product->id)
+		{
+			return array(
+				'id_product' => (int)$this->product->id,
+				'price' => (float)$price,
+				'weight' => (float)$weight,
+				'ecotax' => 0,
+				'quantity' => (int)Tools::getValue('quantity'),
+				'reference' => pSQL($_POST['reference']),
+				'default_on' => 0,
+				'available_date' => '0000-00-00'
+			);
+		}
+		return array();
+	}
+
+	protected static function createCombinations($list)
+	{
+		if (count($list) <= 1)
+			return count($list) ? array_map(create_function('$v', 'return (array($v));'), $list[0]) : $list;
+		$res = array();
+		$first = array_pop($list);
+		foreach ($first as $attribute)
+		{
+			$tab = AdminAttributeGeneratorController::createCombinations($list);
+			foreach ($tab as $to_add)
+				$res[] = is_array($to_add) ? array_merge($to_add, array($attribute)) : array($to_add, $attribute);
+		}
+		return $res;
+	}
+
+	public function initProcess()
+	{
+		if (Tools::isSubmit('generate'))
+		{
+			if ($this->tabAccess['edit'] === '1')
+				$this->action = 'generate';
+			else
+				$this->errors[] = Tools::displayError('You do not have permission to add this.');
+		}
+		parent::initProcess();
+	}
+
+	public function postProcess()
+	{
+		$this->product = new Product((int)Tools::getValue('id_product'));
+		$this->product->loadStockData();
+		parent::postProcess();
+	}
+
+	public function processGenerate()
+	{
+		if (!is_array(Tools::getValue('options')))
+			$this->errors[] = Tools::displayError('Please select at least one attribute.');
+		else
+		{
+			$tab = array_values(Tools::getValue('options'));
+			if (count($tab) && Validate::isLoadedObject($this->product))
+			{
+				AdminAttributeGeneratorController::setAttributesImpacts($this->product->id, $tab);
+				$this->combinations = array_values(AdminAttributeGeneratorController::createCombinations($tab));
+				$values = array_values(array_map(array($this, 'addAttribute'), $this->combinations));
+
+				// @since 1.5.0
+				if ($this->product->depends_on_stock == 0)
+				{
+					$attributes = Product::getProductAttributesIds($this->product->id, true);
+					foreach ($attributes as $attribute)
+						StockAvailable::removeProductFromStockAvailable($this->product->id, $attribute['id_product_attribute'], Context::getContext()->shop);
+				}
+		
+				$this->product->deleteProductAttributes();
+				$this->product->generateMultipleCombinations($values, $this->combinations);
+		
+				// @since 1.5.0
+				if ($this->product->depends_on_stock == 0)
+				{
+					$attributes = Product::getProductAttributesIds($this->product->id, true);
+					$quantity = (int)Tools::getValue('quantity');
+					foreach ($attributes as $attribute)
+						StockAvailable::setQuantity($this->product->id, $attribute['id_product_attribute'], $quantity);
+				}
+				else
+					StockAvailable::synchronize($this->product->id);
+				Tools::redirectAdmin($this->context->link->getAdminLink('AdminProducts').'&id_product='.(int)Tools::getValue('id_product').'&addproduct&key_tab=Combinations&conf=4');
+			}
+			else
+				$this->errors[] = Tools::displayError('Unable to initialize these parameters. A combination is missing or an object cannot be loaded.');
+		}
+	}
+
+	protected static function displayAndReturnAttributeJs()
+	{
+		$attributes = Attribute::getAttributes(Context::getContext()->language->id, true);
+		$attribute_js = array();
+		foreach ($attributes as $k => $attribute)
+			$attribute_js[$attribute['id_attribute_group']][$attribute['id_attribute']] = $attribute['name'];
+		echo '
+		<script type="text/javascript">
+			var attrs = new Array();
+			attrs[0] = new Array(0, \'---\');';
+		foreach ($attribute_js as $idgrp => $group)
+		{
+			echo '
+				attrs['.$idgrp.'] = new Array(0, \'---\' ';
+			foreach ($group as $idattr => $attrname)
+				echo ', '.$idattr.', \''.addslashes(($attrname)).'\'';
+			echo ');';
+		}
+		echo '
+		</script>';
+		return $attribute_js;
+	}
+
+    protected static function setAttributesImpacts($id_product, $tab)
+    {
+        $attributes = array();
+        foreach ($tab as $group)
+            foreach ($group as $attribute)
+				{
+					$price = preg_replace('/[^0-9.]/', '', str_replace(',', '.', Tools::getValue('price_impact_'.(int)$attribute)));
+					$weight = preg_replace('/[^0-9.]/', '', str_replace(',', '.', Tools::getValue('weight_impact_'.(int)$attribute)));
+					$attributes[] = '('.(int)$id_product.', '.(int)$attribute.', '.(float)$price.', '.(float)$weight.')';
+				}
+
+		return Db::getInstance()->execute('
+		INSERT INTO `'._DB_PREFIX_.'attribute_impact` (`id_product`, `id_attribute`, `price`, `weight`)
+		VALUES '.implode(',', $attributes).'
+		ON DUPLICATE KEY UPDATE `price` = VALUES(price), `weight` = VALUES(weight)');
+    }
+
+	protected static function getAttributesImpacts($id_product)
+	{
+		$tab = array();
+		$result = Db::getInstance()->executeS(
+			'SELECT ai.`id_attribute`, ai.`price`, ai.`weight`
+			FROM `'._DB_PREFIX_.'attribute_impact` ai
+			WHERE ai.`id_product` = '.(int)$id_product);
+
+		if (!$result)
+			return array();
+		foreach ($result as $impact)
+		{
+			$tab[$impact['id_attribute']]['price'] = (float)$impact['price'];
+			$tab[$impact['id_attribute']]['weight'] = (float)$impact['weight'];
+		}
+		return $tab;
+    }
+
+	public function initGroupTable()
+	{
+		$combinations_groups = $this->product->getAttributesGroups($this->context->language->id);
+		$attributes = array();
+		$impacts = AdminAttributeGeneratorController::getAttributesImpacts($this->product->id);
+		foreach ($combinations_groups as &$combination)
+		{
+			$target = &$attributes[$combination['id_attribute_group']][$combination['id_attribute']];
+			$target = $combination;
+			if (isset($impacts[$combination['id_attribute']]))
+			{
+				$target['price'] = $impacts[$combination['id_attribute']]['price'];
+				$target['weight'] = $impacts[$combination['id_attribute']]['weight'];
+			}
+		}
+        $this->context->smarty->assign(array(
+        	'currency_sign' => $this->context->currency->sign,
+        	'weight_unit' => Configuration::get('PS_WEIGHT_UNIT'),
+        	'attributes' => $attributes,
+		));
+	}
+
+	public function initToolbar()
+	{
+		$this->toolbar_btn['back'] = array(
+			'href' => $this->context->link->getAdminLink('AdminProducts').'&id_product='.(int)Tools::getValue('id_product').'&addproduct&key_tab=Combinations',
+			'desc' => $this->l('Back to the product')
+		);
+	}
+
+	public function initContent()
+	{
+		if (!Combination::isFeatureActive())
+		{
+			$this->displayWarning($this->l('This feature has been disabled. You can activate it at:').'
+				<a href="index.php?tab=AdminPerformance&token='.Tools::getAdminTokenLite('AdminPerformancÿØÿà JFIF   d d  ÿì Ducky       ÿî Adobe dÀ   ÿÛ „ #%'%#//33//@@@@@@@@@@@@@@@&&0##0+.'''.+550055@@?@@@@@@@@@@@@ÿÀ  œ ú" ÿÄ ‰                              !1AQa"q2‘B¡R#3±ÁÑS$áñbr‚C        !A1Qa¡ÿÚ   ? úQ@QEQ@QEQAågÈ–Ş‘U÷ãwsê;
+F>à‚G!Ïv©w8o¤›Éœ’ /Krr½VŒĞêxúÖ0'S­píÛxgN™ÍY?õÎô³/¹,
+Q~zÚÒ‹W=Ü5É$Vş®×lsûäÉUM‘$Íw?…E#g:U‘c³©6  i]og	ÕF6&Å…4ÇÄÔiS†ÚÖ¦’8VîBŠÌ–µl‰$H‚¡6DQ’ ¥Ù}Üj°ëçJfÈy)JÜ’~Ø½­1Êî¤’±~t²l†cwkÖvÈ,xD91ğ¦=ƒ/(‡ŸĞ‡¥-F%g•¸D¥‰ğ¦¸?oO=Ÿ#Aü´÷µâá¨â ·jiÕO ©«ˆaöÜldP\u­ ¨{£UîkPÅäéU0&…”±°«BisY¦(EõkWp½ªv5Q]QEEPQEUdNDÒ9°Qz²¸¼>áxsB€Î|ÏJAWyî¿Q)=:|)¹7½Vùd‘í#1>¬‡³çÌÀºñu«[Î†hT“A”µÄ’ÂøV	İĞcéæôºôÿ I$l“#ON¦°¿·s#[ ¬Òg„7Qmi|ùÇšìw®zc³OW64ƒÜP.Ô×7H– ‘­qŸP@ õ/¨r×¿mjŞF=«¯ÊîÑD
+@.š”M—,­ÊFÒ°.Ieµ‰za…Ø»yÀÇêw«¨Èù"üc˜øV¼.Ë›œÁ¥¼q×Eƒöö&‹oâi‰
+š(°ò¬ê—aö<LU^MÔšdUx*·fJ®Ìu54_îxÔZ?pŞª¯Z¢:TÕTa`4Ş©X¦å®Õ¹ˆ©Æ:íDÖxĞ¦â¯«ı´a¥WíÚmDµê@¤ÕÀ¡”Ş®÷ğªÑE¦EQ@QEQAáÔZ”åöÙ“)šxUä&å65—3+?ry%Úì@ ÀØ˜xÉÆ(•@ÚÀR¼Ü¸q£id6QĞUóî4Yq—˜Ìı =EqsçÊíÇÜ,§P]èÔ¸oÜ»àäcP;ÒŒ¶%­ª1½ª²$¥$¾¶ªÍ¬Pí½myrM ZêzíFë¡Ú¼'®ô@£ôÕ±EÌjm­ª	amúWCÚ;4²Ù mECÉÙğ!f·7#[ÓÄp=+`:Z°E‚1{V)oÆ¥­cSwªõìw?5IÖÂâ¥¨Á,’ó
+‡hEnë^²İyZ¼2 (Ö³«©ªYoWDƒ‰¾õâÅ|MnÄòmé‰T^ı*9Rğˆ”6«ò^8±Ìª.<©İÅ¦¸#ŠÒğÍjƒ:UĞµ_û'½&iÔµ†uQ™luÖ¦Öy9=æM­z£ÿ °Íş×^4•òeC¡üj^Ş4Úrú¥Q]TQEQ@W•^NL°´ó¸HĞ]˜×!÷İ˜óvÕ›µå˜åP;Y˜[k”{ŸÜXøË•N¿Uœ•õ/§pyışNöÄ @Y»?*Å•”®Ù¼î-îĞÖ·rÊ\Zÿ +`TUQ+ÈB›yèmUfPİTÔ¤UÑƒrVÖıóEm¢ôT¤‘ä´ŒnÛ~Y$6£zõTuµ]‰,Ì¬<j
+,6¶µ«·K=Ê¾&›áö„°%y0ëMbÂe]QÒ¦µ:şX0{TPÛNmâiì(À(şL>Øn,ã ­ø·k’¼@ÚôÖ¸Ÿ
+­/¼ VÔˆ	bÄŸ5Z 
+‰j¢‚ÕŸ…iä—kTÂ«¡â¼¾1’‰xIÅ9ÚçaVr"®ÛTò±Æ1ú—Bj–É‹ †]
+‹Ö.Î[ë×Ù¥³m`6¯2¤œÄQ-­c$mcfÂŞàiù[Ÿ-/¥gÙÒ}r<²¸˜¥Õ){â9OrÇ ­rfûLª‘³±ù…{4±1,|M´jÏµ[õõ¥y8ù(/¨ôµ.úLåõ°&ÎÓdGÿ 2u¢ÉŠï¥ä?(­N×5ÎıSÛ&’À’Lüd<To[>“Ç¥«Wí²ä§'"&ŞÚŸıÁ·ñ­o+¿<>…EWg1EP»¸÷ŞÛÛ'†É}·œ:\([ÀRÿ ¼ûooí©.#ûfGöİ‡Ìå®3¼ägD#Ìq#(â²ê·™ªaŸÜ}÷<ædá.QÈíÙ$ @BŞöFÏåû^éâœÖ j~5iLKzPúExñ»Í—
+YEÈ7ó¢âîa êú|kÀÌÑG'‹Øµ$ÌYÇ1suØUğcdÊ§ÛCisÔTUR|‘‚=M:Õ‰4î©â ğ¦¸İ pâ“ÇÂœâvåHîVäjÕ5d%ÃìÂü˜OåO1ûZ¢‹ğ¦8ø¶¸Úı<+lXÀŸP"‹ÄaÇÁâÁ€°ğ­©Œ/{V‘ …iU¾ôÄµŠ<HîO¹1`kØ‹4«PÂKGKT›à<.€]‰pÒ¼ã.™ÏÜêü\˜ò!Æ	S¹¬Í?qÒLÁTü ôºâƒVíªe9ò”’cG>G¥I°5·@°ƒ¬EéNn^;F°J.	 ƒQÈî¸İ·„"ä0¸#PjCÖÓ¬Œxò h›åmrùmfE~–_é0Ùi^ø’DU¸^Í"î+Ò’÷&{D€¨EÇfÙ¸×YÛ¯;¾\<îŞ†6
+Ü†¶Ş ŒcP#`Œ5*N¦™æ6qŸŒ±¯}â~oÂ—I‹‰9öâ<¦ı|zWÓ-vëvD£%b2J¶/àk,ƒÛ°ädt¥.V>J)Œ¼H,£{šØdDÅ¸Å"j	ÔŠÎ5¡3N-‹ÅÄl<6íï‡4nò$=qJ¢y\E”ÕEĞùùÖˆ8ÆÅÙy2uè+]n3Úl¨ÏÄJñÊ@}'cn•WÓÇáÓÇ§…]Ÿ	Ë0ab Òâ²ı3ÿ ,›ùşTóú<~İ­W•èyÔY€ëµe”‰6·NTWÿ  wu›"İkAy%b,	"ÊqœoHÒ¾™Ş{qs,ÊÆN<Õˆ°UÇä}·ôÒ.^0Oı5©
+³ªª‹ªÈpe™À&ÀtëO°»dGŠ•4ß°«9dô5úŠš¹ùs˜ /Ê-¹jo‹Ú›ÖİiÛö±a` I»\^õf<lšÌ¾Ûu?¤tŞ‹³Ã<X%@µ¬MhÊ Z‰›Kìj¥ËOÛàlF’hEVãÀ®.HµfH˜ÈkÀõ4A îÀú|¨–é«%ˆEX¦E‰œ.5õxÖl®é:°GşKÓãZY¤xŠîOJA™•2r$°BD—:(k}c]&ÖÅÌÉ\èËÂK µĞæ÷|<&k¸¦¸ÏÜ1İ–PH¿ö‰;ı5VFC‘9”5ø¨?Æµd­Ş’ãÌã4¹†HÀ‚9ô@—°·ú×C…Û»›ã!“(@ ½´c®×½&>Òâ!{dJ2òáUcwId\‡<˜q~@W{:X¶q‘ffDæID‚PkñùKV¹rÜ,~k|¦šå•7Ô¯=#A¯,È‚L`ZG<Ÿå ÁmµUğ!ÌÅ~B6¹'\¹93@ì“]×åéÊ¡ût™0¢¼ 9>–FµëaM0>Ö9U2d	!ªŞ5›KÛ>YÒnğÌ*9–êmqzal—é›&50³|ş4ÿ V`í3Hx¤fÖÏÎ¬1¢‰¢r%¸*z“\{t–Ûùcú|HK6?´=EÍ´rzÕqvØ–vrå8©,F¿êàó…ãi1É%]z_¥hKM±¦)\Yz‹å\ç^yŸ–ñ²ü—¶t¸àÙa¯'Â²ıT³JU¢…'sáMkÎÆFÈ¾Ù:ºu­˜İ»HİD È4mÈRu»”½æl+-"h¤i§ÊÉÖô×÷İşçğëSÅìÉŒfT•‰º‹iZ8öÿ ö—kü¿Â¯¥õÏ÷úuöÿ šcQ¹$ÜéÒ½bvkVX!O™õ®Ï2æ30Ğ*õªÈôêG[\‹DîMU'5Šr'`:ÑX³28ƒæëà,uÁ_õ©­“ã3M¢1c¨[õ­X¸bT©o/Ê¢©ÅíßªE ZÀVàŠ4j±‰>”°¾ş{BKò îhšYŸÜqñ `²0¿¨ij]‘“ ÉiÁE‚T…ßJ‡Ü¿3+5¥kA€¡«éjI4S®;Ä”Xú«sÊÖĞ?‹:µW@B†U»§!¡·…kYq¢²‚€“cãÊ¹œ9r²"u„FâbÁ¢7V×•íújÙğò1‚åäÎ>KïlA:Øoj˜•[ò
+/ĞÚæµ`:ˆÌ¬P@Iõ -\¦^d	äÄ«UGÈªÌ.|iŒ9ù™¼>X	­Öãªî›kT{÷ÈÁ”f‚¿G!³¸ÓüëË3²!TŒÂy-`èuõ_jo4Ã2ÇÒHTòŞñépOı«.DrÈ†1 t7ŒË`¼AşV6¹µkÛ†ç|™Œv‰—#Ü–c@Hãf_‚“UäKä,2#D°^6`<oãzsÜZ©¢`Øz=@ï±ª{Ï¯,†PåZÜTñº¶¿5'ouïù…ó“’c“ÓŒbæÏññ¡æ—*_§XYUF½¸ß‰éz²àHY&pBFO%Bv'ÏáW™D“A7 ˜úİ‹[ükMïñ±I¿ãÃ#ûbÒ¡%‡Õ¤æC2ˆ²ÓÙ^WBŞÖó«1²1±1Ñ"fä³‘ef#@$üª-–Ù(Uäˆw€¥~PNİ#+åàHábô·#Å®‘zé]Çhs.2:|xòaf i­r˜½ç"<@œe÷L!‡Xï±®ÖålHfeRmmn7¬ösû7><¦
+ò*£S¦šĞÈ¬,À¹Åå“¹¾—°5&‹ÄÜj+.OHw ÕCL&^HPK¹5àÔ†u#a±ó½iO¿Ò4ƒ•İSRiihc“"iad„(,k}º×LEì Sñ¨4:˜Ê‚§æÀÖ/M¾ÍÏ³:úàÇh¤…í0º×¼âñ]øÿ îğ¯"Æ©KhìxÛajŸğßñ­xcËÚÆ;v<%æØ‚Î<¬wÒµ3èœI{°Ùmãñªòç\h!ïíÆ=…Í­ÒªC7tÈwŒ/·@c’EµÉ± €oVƒ›‡*XË£Ê£W_Ò«á­.O»cßÒ.œø‚­§˜é½(Ïï_S+J’ÉuEï¡Ği½Ñ§xíòÈ@Rd ßbÓ¦µF/s9²ptè€ƒşW9³@XrU‘Ï0ªEÍ×CÈZ·6^|Q³Å3-šG÷.TŸ©Ò é$™aşœŒˆ¾»ñêH­1ª´@ÄÄ#‹ƒÖÄRl´ƒº`,Ò©\¨4ìšöM¬j¼I²{z{ÙJñ¬^% •O[Õä¿4lL¯¨hî9"±I,tºÿ f^Å>FNøñœŸş(Â”ˆÓZ}‡?mî„Ê‡›#\¡$Y€ö©÷¬‰ñpZlsin _BuŞˆä>k¬xåã>â•İ†¿úUp4™‘Ob›“oN †¹»[ki}+FWvš(cf>¹GÌN¤“o;VxsTO!w²©·|å¬9Û¦ÔTr0dgbvu6öÕIfàºkÊÜOA³rrØP¸ÏZE—ÒC #Ä×“w_¦Å‘1O¬Aî½-Uâãä÷—1@@ËËµÒûxí@Î.ÖÃr”×r>[„Zõ™1(|i#wÔ®Ü¸‹èkÓ‘<ˆQdäÀ‚äfíºøü-Z¡ÍšY4÷¿+ GÂôRVŸ"ŠÇ#m®h’Ê‚"J¨Íg˜ÅuôÜ|iæ3$RJ¬°±P#Á›‘Ğ N•oj|Ù¢³#w"c>Ø<Ë\pmX±ÊE†Ó³Ä§Œ·ã”q±èiÛÏŸ'ÇsœŠ:¹ ÷_›Zé'—íØyK Np¤w5ÒûØÖôd–`˜¶DŒvoò¯X‚/Ö­­^ü|cçYı·'V‚@(ÖÀªõ¹[ïZëDƒÛ¸‘ll9yjG¤~5ÒwüT
+ˆ²#h™‹)İƒrı<é$g3^×(ŞáÎÅX|¼™w_:²µ×·İ¯±¶&zÀÙ1ÏÆFN;P¸ÒÂœvôËÄ-sF1Õ‚â° jš¶X¾œ<aòù
+5ºËyÖæUaf YµË·mDñ‘=-¡ıJjU¢Ö8”"/Ê£aC+—B¯ÅVü–×å¦šô¨Ê8é“@ä…q­·£R$èŒ  Í×Oµ!2{¯c ¸R4²•e3Êï+ÊöŠ#À Ğh+Ú( *,ªêU…Õ…ˆò5*(0şÑ€Ìp Î,|~;R9{fjÀˆE•ŠnP‹¡mŠŞºšğ*‹ ¾¦‹®hB‡Ç˜¬r´+"Ø†·O*†,6Dd¡àÀ$‹Ç[úxúwÖ»ã‡…8¼ê®Ê=+érKÏ7rƒX°„E¬±?0¾€Âƒtím“c9™Ôs6ù\ñ6S~İ€q±Ú)]¦÷Ê¾¡ñ_oìÑàä<é+¹{,t ô˜Ä€-Ç^^?…é0ûqÈ÷ŠªˆOÈålä‹)Dñ­y)£Ù–@€¨ŒÛÔOP…Jh @‘€ -¹$u'­U™$±*"pK8ñëÄÑ»·híaÁÀĞƒO`kaÆÍvöæaÍ”$`ß¤“k
+o÷iÈÌ?P%´¯õ"¹^@î+?bÄ™Zi}³$&¹Pçq©¢´cı«—·!k:ÛO­$îx>Ì¾Ş6D×â×à:Ë^í‚FQ9–R‘‰@X -¡“äe, D@áÇ_o‰Şl£=)cÇ1¹6$éÌ¬é¯jì¹Í’RpQ©`u&·ö^æ$CF#EävnBÛq¿Fo*q“‹,KàˆŸ]­`ºµî(ºÏaÅL¨²‘Z+Y9]M…µ–wgïY“ÏƒÇ¸ÜGæ¹ëzé¢’9£Yb`Ñ¸º°ØŠ—Ì¾·"Ö¹¶TIr¹±öîÌŸ¸;œ·!Xğ-á üéGj™§Â|YÎ:bŒ^iéôëğ¯%<7Ë.Â(l]ø–y¹Éeæ£`<ªxˆó4Y,ÈP2{R œÔìY—óªÖßfï}¹ûˆŒ¼¿N‘³/så±[u>ojímWÆYRşÛ  oÓşµ“îï‘‹ì¦8ã‹ÈJV÷`tQÔ~TÃµåM›Š‡*ITLËÅXu]oµ^pç×ôß^ÔYX€¸Øƒ}ƒ¦¾5*ËŠ( (¢ŠŠ( (¢ŠŠ( (¢ŠİË¶ädg$È@ˆ.O‚tµk\l<Ö,Æÿ Mˆ±­¦İh·¦Öéj(ÖãÃ­{EG•íPE•]J°N„ˆ¬óöìYı¾j@†Æ0¤¨òªŠ½ÂdÃu–}VÅb’6ãç\æ7kCv˜K
+«Z4Toæ½Íº×YP_gÜ~6÷4÷-¾Ú^‹öl¶ pØ“$ao&£›³*ZûÖ¾ŞqrÕHUY'ŠÌŠK›%îÿ ¸{ÇÚş÷!m½ßk–—éjoØ-õ¹{Ÿ›n6éøĞ1íÈÑÀPÄbàÅo~Jº+xkVE3{ÍŒ¬ú°¶–^ƒãW/.m—N;V~‹÷hùsú®›_µŞƒiŠ3'¹ÄsãÇ•º^õäI(ñ7¸#P/qzˆö¾­­Ëİà/¿7éÒõu%Š9CuµIFƒKWµäwà/¿Ÿıh‰QEQ@QEQ@QEÿÙ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        e').'#featuresDetachables">'.
+					$this->l('Performance').'</a>');
+			return;
+		}
+
+		// Init toolbar
+		$this->initToolbarTitle();
+		$this->initToolbar();
+
+		$this->initGroupTable();
+
+		$js_attributes = AdminAttributeGeneratorController::displayAndReturnAttributeJs();
+		$attribute_groups = AttributeGroup::getAttributesGroups($this->context->language->id);
+		$this->product = new Product((int)Tools::getValue('id_product'));
+
+		$this->context->smarty->assign(array(
+			'tax_rates' => $this->product->getTaxesRate(),
+			'generate' => isset($_POST['generate']) && !count($this->errors),
+			'combinations_size' => count($this->combinations),
+			'product_name' => $this->product->name[$this->context->language->id],
+			'product_reference' => $this->product->reference,

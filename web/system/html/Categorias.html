@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Casamento em Prudente System AD</title>
+
+<!-- CSS -->
+<link href="style/css/transdmin.css" rel="stylesheet" type="text/css" media="screen" />
+<!--[if IE 6]><link rel="stylesheet" type="text/css" media="screen" href="style/css/ie6.css" /><![endif]-->
+<!--[if IE 7]><link rel="stylesheet" type="text/css" media="screen" href="style/css/ie7.css" /><![endif]-->
+
+<!-- JavaScripts-->
+<script type="text/javascript" src="style/js/jquery.js"></script>
+<script type="text/javascript" src="style/js/jNice.js"></script>
+</head>
+
+<body>
+	<div id="wrapper">
+    	<!-- h1 tag stays for the logo, you can use the a tag for linking the index page -->
+    	<h1><a href="CadastroCategorias.php"><span>Casamento em Prudente System AD</span></a></h1>
+        
+        <!-- You can name the links with lowercase, they will be transformed to uppercase by CSS, we prefered to name them with uppercase to have the same effect with disabled stylesheet -->
+        <ul id="mainNav">
+        	<li><a href="index.php">HOME</a></li> <!-- Use the "active" class for the active menu item  -->
+        	<li><a href="Empresas.php">EMPRESAS</a></li>
+        	<li><a href="Categorias.php" class="active">CATEGORIAS</a></li>
+        	<li><a href="#">EXTRAS</a></li>
+                <li><a href="EmailPacked.php">EMAIL</a></li>
+        	<li class="logout"><a href="finish_session.php">LOGOUT</a></li>
+        </ul>
+        <!-- // #end mainNav -->
+        
+        <div id="containerHolder">
+			<div id="container">
+        		<div id="sidebar">
+                	<ul class="sideNav">
+                        <li><a href="Categorias.php" class="active">Índice</a></li>
+                    	<li><a href="CadastroCategorias.php">Cadastro</a></li>
+                    	
+                    </ul>
+                    <!-- // .sideNav -->
+                </div>    
+                <!-- // #sidebar -->
+                
+                <!-- h2 stays for breadcrumbs -->
+                <h2><a href="#">Categorias</a> &raquo; <a href="#" class="active">Índice</a></h2>
+                
+                <div id="main">
+                	<form action="" class="jNice">
+			<h3>Últimas Cadastradas</h3>
+                    	<table cellpadding="0" cellspacing="0">
+                            <!-- BEGIN BLOCK_ULTIMASCADASTRADAS -->
+                            <tr>
+                                <td>{ULTIMAS_NOME_CATEGORIA}</td>
+                                <td class="action"><a href="EditarCategorias.php?idcat={ULTIMAS_ID_CATEGORIA}" class="edit">Editar</a><a href="Categorias.php?deletecatid={ULTIMAS_ID_CATEGORIA}&all={ALL}" class="delete">Apagar</a></td>
+                            </tr>         
+                            <!-- END BLOCK_ULTIMASCADASTRADAS -->
+                        </table>
+                        <a class="exibirtodas" href="Categorias.php?all=true" >Exibir Todas</a>
+                        <!-- BEGIN BLOCK_CONFIRMAEXCLUSAO -->
+                        <h3>Confirma Exclusão</h3>
+                        <fieldset>
+                            <p><label>Confirma exclusão da categoria {EXCLUSAO_NOME_CATEGORIA}?</label>
+                                <a class="exclusao exclusao_confirm" href="Categorias.php?deletecatid={CAT_TO_DELETE}&all={ALL}&confirm=yes">Excluir</a>
+                                <a class="exclusao exclusao_deny" href="Categorias.php?all={ALL}">Não Excluir</a></p>
+                        </fieldset>
+                        <!-- END BLOCK_CONFIRMAEXCLUSAO -->
+                        
+                        <!-- BEGIN BLOCK_MSG -->
+                            <h3>Confirma Exclusão</h3>
+                            <fieldset>
+                            <p><label>{MSG}</label></p>
+                            </fieldset>
+                        <!-- END BLOCK_MSG -->
+			<h3>Pesquisar Categoria</h3>
+                    	<fieldset>
+                        	<p><label>Nome da Categoria:</label><input type="text" class="text-long" /></p>
+                        	
+                            <input type="submit" value="Pesquisar" />
+                        </fieldset>
+                    </form>
+                </div>
+                <!-- // #main -->
+                
+                <div class="clear"></div>
+            </div>
+            <!-- // #container -->
+        </div>	
+        <!-- // #containerHolder -->
+        
+        <p id="footer">Desenvolvido para Uso exclusivo. <a href="http://www.caffeinedev.com.br">CaffeineDev Softwares</a></p>
+    </div>
+    <!-- // #wrapper -->
+</body>
+</html>
+
+
